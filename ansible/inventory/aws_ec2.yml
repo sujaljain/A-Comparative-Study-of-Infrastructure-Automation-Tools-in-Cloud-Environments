@@ -1,0 +1,41 @@
+# =============================================================================
+# inventory/aws_ec2.yml
+# Dynamic AWS EC2 inventory using amazon.aws collection
+# Automatically discovers EC2 instances tagged for this study
+# =============================================================================
+
+plugin: amazon.aws.aws_ec2
+
+# AWS region (Mumbai — matching paper's experimental setup)
+regions:
+  - ap-south-1
+
+# Filter only instances tagged for this study
+filters:
+  "tag:Project": cloud-automation-study
+  "tag:Tool": ansible
+  instance-state-name: running
+
+# Group instances by tags
+keyed_groups:
+  - key: tags.Environment
+    prefix: env
+  - key: tags.Role
+    prefix: role
+  - key: placement.region
+    prefix: region
+
+# Use private IP for internal VPC communication
+hostnames:
+  - private-ip-address
+
+# Map to Ansible groups
+groups:
+  webservers: "'webserver' in tags.get('Role', '')"
+
+# Variables applied to all hosts
+compose:
+  ansible_host: private_ip_address
+  ansible_user: ubuntu
+  ansible_ssh_private_key_file: "~/.ssh/chitkara-research-key.pem"
+  ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"

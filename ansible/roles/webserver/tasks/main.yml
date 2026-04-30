@@ -1,0 +1,69 @@
+---
+# =============================================================================
+# roles/webserver/tasks/main.yml
+# Performs 4 steps matching the paper's standard automation task definition
+# =============================================================================
+
+# ── Step 1: Update package cache ─────────────────────────────────────────────
+- name: Update apt package cache
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+# ── Step 2: Install Nginx ─────────────────────────────────────────────────────
+- name: Install Nginx web server
+  apt:
+    name: "nginx={{ nginx_version }}"
+    state: present
+  notify: Restart Nginx
+
+# ── Step 3: Deploy custom Nginx configuration ─────────────────────────────────
+- name: Deploy Nginx configuration from template
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+    validate: "/usr/sbin/nginx -t -c %s"
+  notify: Restart Nginx
+
+# ── Step 3b: Deploy application virtual host config ──────────────────────────
+- name: Deploy virtual host configuration
+  template:
+    src: nginx.conf.j2
+    dest: "/etc/nginx/sites-available/{{ app_name }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload Nginx
+
+- name: Enable virtual host
+  file:
+    src: "/etc/nginx/sites-available/{{ app_name }}"
+    dest: "/etc/nginx/sites-enabled/{{ app_name }}"
+    state: link
+  notify: Reload Nginx
+
+- name: Remove default Nginx site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload Nginx
+
+# ── Step 4: Ensure Nginx is running and enabled on boot ──────────────────────
+- name: Ensure Nginx service is started and enabled
+  service:
+    name: nginx
+    state: started
+    enabled: true
+
+# ── Health check ──────────────────────────────────────────────────────────────
+- name: Wait for Nginx to be ready
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: "{{ nginx_port }}"
+    delay: 2
+    timeout: 30
+    state: started

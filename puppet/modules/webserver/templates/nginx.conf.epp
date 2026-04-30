@@ -1,0 +1,66 @@
+<%- | Integer $nginx_port,
+      String  $app_name,
+      String  $environment,
+      String  $hostname
+| -%>
+# =============================================================================
+# nginx.conf — Managed by Puppet
+# Any manual changes will be overwritten on the next Puppet agent run.
+# Node: <%= $hostname %>  |  App: <%= $app_name %>  |  Env: <%= $environment %>
+# =============================================================================
+
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
+
+events {
+    worker_connections 768;
+    multi_accept on;
+}
+
+http {
+    sendfile on;
+    tcp_nopush on;
+    types_hash_max_size 2048;
+    server_tokens off;
+
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+    gzip on;
+
+    server {
+        listen <%= $nginx_port %> default_server;
+        listen [::]:<%= $nginx_port %> default_server;
+
+        root /var/www/html;
+        index index.html index.htm;
+
+        server_name <%= $hostname %>;
+
+        # Headers injected by Puppet template
+        add_header X-App-Name "<%= $app_name %>";
+        add_header X-Environment "<%= $environment %>";
+        add_header X-Deployed-By "Puppet-8.x";
+        add_header X-Node "<%= $hostname %>";
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+
+        # Health check endpoint
+        location /health {
+            access_log off;
+            return 200 "OK - <%= $app_name %> on <%= $hostname %>\n";
+            add_header Content-Type text/plain;
+        }
+
+        location ~ /\. {
+            deny all;
+        }
+    }
+}

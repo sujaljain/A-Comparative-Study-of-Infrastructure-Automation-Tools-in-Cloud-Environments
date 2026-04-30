@@ -1,0 +1,67 @@
+# =============================================================================
+# roles/webserver/templates/nginx.conf.j2
+# Nginx configuration template — rendered by Ansible using Jinja2
+# Variables injected from playbook vars at runtime
+# =============================================================================
+
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
+
+events {
+    worker_connections 768;
+    multi_accept on;
+}
+
+http {
+    # Basic Settings
+    sendfile on;
+    tcp_nopush on;
+    types_hash_max_size 2048;
+    server_tokens off;
+
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    # Logging
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+    # Gzip
+    gzip on;
+    gzip_disable "msie6";
+
+    # Virtual Host
+    server {
+        listen {{ nginx_port }} default_server;
+        listen [::]:{{ nginx_port }} default_server;
+
+        root /var/www/html;
+        index index.html index.htm;
+
+        server_name {{ ansible_hostname }};
+
+        # Application identifier — injected by Ansible
+        add_header X-App-Name "{{ app_name }}";
+        add_header X-Environment "{{ server_env }}";
+        add_header X-Deployed-By "Ansible-{{ ansible_version.full }}";
+        add_header X-Node "{{ inventory_hostname }}";
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+
+        # Health check endpoint
+        location /health {
+            access_log off;
+            return 200 "OK - {{ app_name }} on {{ inventory_hostname }}\n";
+            add_header Content-Type text/plain;
+        }
+
+        # Block hidden files
+        location ~ /\. {
+            deny all;
+        }
+    }
+}

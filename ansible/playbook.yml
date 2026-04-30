@@ -1,0 +1,44 @@
+---
+# =============================================================================
+# deploy_webserver.yml
+# Research Paper: A Comparative Study of Infrastructure Automation Tools
+# Tool: Ansible 2.17.x
+# Task: Provision + Configure Nginx web server on AWS EC2 (Ubuntu 22.04)
+# Authors: Risham Goyal, Vaibhav Khanna, Sujal Jain — Chitkara University
+# =============================================================================
+
+- name: Deploy and Configure Nginx Web Server
+  hosts: webservers
+  become: true
+  gather_facts: true
+
+  vars:
+    nginx_port: 80
+    app_name: "cloud-automation-study"
+    server_env: "research"
+    nginx_version: "1.24.*"
+
+  roles:
+    - webserver
+
+  post_tasks:
+    - name: Verify Nginx is responding on port 80
+      uri:
+        url: "http://{{ ansible_host }}:{{ nginx_port }}"
+        method: GET
+        status_code: 200
+        timeout: 10
+      register: health_check
+      retries: 3
+      delay: 5
+      delegate_to: localhost
+      become: false
+
+    - name: Print deployment summary
+      debug:
+        msg:
+          - "✅ Deployment successful on {{ inventory_hostname }}"
+          - "   Host     : {{ ansible_host }}"
+          - "   Nginx    : {{ nginx_version }}"
+          - "   Port     : {{ nginx_port }}"
+          - "   Status   : {{ health_check.status }}"

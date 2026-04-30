@@ -6,6 +6,28 @@
 
 ---
 
+## 📋 Project Information
+
+| Field | Details |
+|-------|---------|
+| **Project Title** | A Comparative Study of Infrastructure Automation Tools in Cloud Environments |
+| **Type** | Research Paper |
+| **Current Status** | ✅ Completed — Manuscript prepared, targeting conference submission |
+| **Batch** | 2022–2026 (8th Semester) |
+| **Program** | B.E. Computer Science and Engineering |
+| **University** | Chitkara University, Punjab, India |
+| **Internship Organization** | AU Bank (Cloud Automation — Ansible on AWS) |
+
+### 👥 Team Details
+
+| Name | Roll Number | Email | Internship Role |
+|------|-------------|-------|-----------------|
+| Risham Goyal | 2210992157 | risham2157.be22@chitkara.edu.in | Cloud Automation (Ansible/AWS) |
+| Vaibhav Khanna | 2210992486 | vaibhav2486.be22@chitkara.edu.in | Development Team |
+| Sujal Jain | 2210994845 | sujal4845.be22@chitkara.edu.in | Development Team |
+
+---
+
 ## 📌 Overview
 
 This repository contains the automation scripts used in the experimental evaluation of three major Infrastructure as Code (IaC) and configuration management tools:
